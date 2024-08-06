@@ -1,0 +1,12 @@
+name = "greedy"
+uuid = "33d2cac2-d8c5-45e4-a948-415fd9e98c63"
+authors = ["SDU-Cui <1137519621@qq.com>"]
+version = "0.1.0"
+
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+NumOpt = "05e72487-f303-4931-9204-bc7c699629ef"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Shared = "81d1b3b8-72b9-45bf-ac84-59a2c93b420c"
+StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"

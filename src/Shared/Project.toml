@@ -1,0 +1,8 @@
+name = "Shared"
+uuid = "81d1b3b8-72b9-45bf-ac84-59a2c93b420c"
+authors = ["Gao Shuhua <shuhua_gao@u.nus.edu>"]
+version = "0.1.0"
+
+[deps]
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
