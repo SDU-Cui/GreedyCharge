@@ -117,10 +117,10 @@ function compute_power(arr::AbstractMatrix{INT}, env::Environment)
     pi_A = env.phases[1]
     pi_B = env.phases[2]
     pi_C = env.phases[3]
-    power_list = P .* arr
-    power_A = sum(power_list[pi_A[:], :], dims=2) |> vec
-    power_B = sum(power_list[pi_B[:], :], dims=2) |> vec
-    power_C = sum(power_list[pi_C[:], :], dims=2) |> vec
+    power_list = arr .* P'
+    power_A = sum(power_list[:, pi_A[:]], dims=2) |> vec
+    power_B = sum(power_list[:, pi_B[:]], dims=2) |> vec
+    power_C = sum(power_list[:, pi_C[:]], dims=2) |> vec
     EVspower = hcat(power_A, power_B, power_C)
     power = base_load + EVspower
 
@@ -154,6 +154,15 @@ function compute_imbalance(power::AVF)
 end
 
 
+function compute_imbalance(power::AMF)
+    maxp = mapslices(maximum, power, dims=2)
+    minp = mapslices(minimum, power, dims=2)
+    avgp = sum(power, dims=2) / 3
+
+    return ((maxp - minp) ./ avgp) |> vec
+end
+
+
 function which_max_phase(power::AVF)
     max_phase = argmax(power)
 
@@ -171,4 +180,64 @@ function rndstop!(h::AVI, xi::Vector{INT}, pt::Vector{FLOAT}, env::Environment, 
     xi[rnd_v] = 0
     h[rnd_v] += 1
     pt[max_pi] -= powers[rnd_v]
+end
+
+
+function minhstop!(h::AVI, xi::AVI, pt::AVF, env::Environment, max_pi::Int)
+    max_phases = env.phases[max_pi]
+    powers = env.tasks.P
+    ones_indices = filter(i -> xi[i] == 1, max_phases)
+    minh_index = sortperm(h[ones_indices])[1]
+    minh_v = ones_indices[minh_index]
+
+    xi[minh_v] = 0
+    h[minh_v] += 1
+    pt[max_pi] -= powers[minh_v]
+end
+
+
+function rndstart!(h::AVI, X::AMI, env::Environment)
+    
+end
+
+
+function power_violation(X::AMI, env::Environment)
+    power = compute_power(X, env)
+    gross_power = sum(power, dims=2) |> vec
+
+    return gross_power / env.P_max
+end
+
+
+function imbalance_violation(X::AMI, env::Environment)
+    power = compute_power(X, env)
+    imb = compute_imbalance(power)
+
+    return imb / env.pi_max
+end
+
+
+function repairSOC!(h::AVI, X::AMI, env::Environment)
+    err_indicies = findall(x -> x > 0, h)
+    for i in err_indicies
+        power_vio = power_violation(X, env)
+        imb_vio = imbalance_violation(X, env)
+        vio_sort = sortperm(imb_vio)
+        for t in vio_sort
+            if h[i] == 0
+                break
+            elseif t > env.tasks.l[i]
+                continue
+            elseif X[t, i] == 0
+                if power_vio[t] + env.tasks.P[i] / env.P_max > 1
+                    continue
+                else 
+                    h[i] -= 1
+                    X[t, i] = 1
+                end
+            else
+                continue
+            end
+        end
+    end
 end

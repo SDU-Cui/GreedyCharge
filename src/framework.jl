@@ -18,6 +18,7 @@ function run_greedy(env::Environment; jld2_file::String="")
         repair!(h, xt, env, ti)
         X[ti, :] = xt
     end
+    repairSOC!(h, X, env)
     end_time = time()
     solve_time = end_time - start_time
     
